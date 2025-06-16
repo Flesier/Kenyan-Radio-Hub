@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Play, Pause, Volume2, VolumeX } from "lucide-react";
 
+// Declare a global variable to keep track of the currently playing audio instance
+let currentlyPlayingAudio: HTMLAudioElement | null = null;
+
 interface RadioPlayerProps {
   stationName: string;
   frequency: string;
@@ -36,9 +39,15 @@ export function RadioPlayer({ stationName, frequency, streamUrl, currentShow }: 
     if (audioRef.current) {
       if (isPlaying) {
         audioRef.current.pause();
+        // If this was the currently playing audio, clear the global reference
+        if (currentlyPlayingAudio === audioRef.current) {
+          currentlyPlayingAudio = null;
+        }
       } else {
-        // Stop any other playing audio elements
-        document.querySelectorAll('audio').forEach(audio => audio.pause());
+        // If another audio is currently playing, pause it
+        if (currentlyPlayingAudio && currentlyPlayingAudio !== audioRef.current) {
+          currentlyPlayingAudio.pause();
+        }
 
         // Set the stream URL (in case it changed)
         audioRef.current.src = streamUrl;
@@ -47,6 +56,9 @@ export function RadioPlayer({ stationName, frequency, streamUrl, currentShow }: 
         audioRef.current.play().catch(e => {
           console.error("Error playing audio:", e);
         });
+
+        // Set this audio as the currently playing audio globally
+        currentlyPlayingAudio = audioRef.current;
       }
       setIsPlaying(!isPlaying);
     }
